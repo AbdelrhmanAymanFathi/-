@@ -2,10 +2,193 @@ const express = require('express');
 const db = require('../database');
 const { requireManager } = require('../middleware/auth');
 const logger = require('../utils/logger');
+const advancedReportService = require('../services/advancedReportService');
 
 const router = express.Router();
 
-// GET /api/reports/summary - Get summary statistics
+// GET /api/reports/periods - Get available report periods
+router.get('/periods', requireManager, async (req, res) => {
+  try {
+    const periods = await advancedReportService.getAvailablePeriods();
+    res.json({ periods });
+  } catch (error) {
+    logger.error('Error fetching report periods:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/reports/generate - Generate period-based report
+router.post('/generate', requireManager, async (req, res) => {
+  try {
+    const { periodType, startDate, endDate, filters = {} } = req.body;
+
+    if (!periodType || !startDate || !endDate) {
+      return res.status(400).json({ 
+        error: 'Period type, start date, and end date are required' 
+      });
+    }
+
+    // Validate period type
+    const validPeriods = ['daily', 'weekly', 'monthly', 'yearly'];
+    if (!validPeriods.includes(periodType)) {
+      return res.status(400).json({ 
+        error: 'Invalid period type. Must be one of: daily, weekly, monthly, yearly' 
+      });
+    }
+
+    // Generate the report
+    const reportData = await advancedReportService.generatePeriodReport(
+      periodType, 
+      startDate, 
+      endDate, 
+      filters
+    );
+
+    res.json({
+      message: 'Report generated successfully',
+      report: reportData
+    });
+
+  } catch (error) {
+    logger.error('Error generating period report:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/reports/export-excel - Export report to Excel
+router.post('/export-excel', requireManager, async (req, res) => {
+  try {
+    const { periodType, startDate, endDate, filters = {} } = req.body;
+
+    if (!periodType || !startDate || !endDate) {
+      return res.status(400).json({ 
+        error: 'Period type, start date, and end date are required' 
+      });
+    }
+
+    // Generate the report first
+    const reportData = await advancedReportService.generatePeriodReport(
+      periodType, 
+      startDate, 
+      endDate, 
+      filters
+    );
+
+    // Export to Excel
+    const excelBuffer = await advancedReportService.exportToExcel(reportData, periodType);
+
+    // Set response headers for file download
+    const filename = `تقرير_${periodType}_${startDate}_${endDate}.xlsx`;
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', excelBuffer.length);
+
+    res.send(excelBuffer);
+
+  } catch (error) {
+    logger.error('Error exporting Excel report:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/reports/quick-daily - Quick daily report (last 7 days)
+router.get('/quick-daily', requireManager, async (req, res) => {
+  try {
+    const endDate = new Date().toISOString().split('T')[0];
+    const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const reportData = await advancedReportService.generatePeriodReport(
+      'daily', 
+      startDate, 
+      endDate, 
+      {}
+    );
+
+    res.json({
+      message: 'Daily report generated successfully',
+      report: reportData
+    });
+
+  } catch (error) {
+    logger.error('Error generating quick daily report:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/reports/quick-weekly - Quick weekly report (last 4 weeks)
+router.get('/quick-weekly', requireManager, async (req, res) => {
+  try {
+    const endDate = new Date().toISOString().split('T')[0];
+    const startDate = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const reportData = await advancedReportService.generatePeriodReport(
+      'weekly', 
+      startDate, 
+      endDate, 
+      {}
+    );
+
+    res.json({
+      message: 'Weekly report generated successfully',
+      report: reportData
+    });
+
+  } catch (error) {
+    logger.error('Error generating quick weekly report:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/reports/quick-monthly - Quick monthly report (last 6 months)
+router.get('/quick-monthly', requireManager, async (req, res) => {
+  try {
+    const endDate = new Date().toISOString().split('T')[0];
+    const startDate = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const reportData = await advancedReportService.generatePeriodReport(
+      'monthly', 
+      startDate, 
+      endDate, 
+      {}
+    );
+
+    res.json({
+      message: 'Monthly report generated successfully',
+      report: reportData
+    });
+
+  } catch (error) {
+    logger.error('Error generating quick monthly report:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/reports/quick-yearly - Quick yearly report (last 2 years)
+router.get('/quick-yearly', requireManager, async (req, res) => {
+  try {
+    const endDate = new Date().toISOString().split('T')[0];
+    const startDate = new Date(Date.now() - 730 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const reportData = await advancedReportService.generatePeriodReport(
+      'yearly', 
+      startDate, 
+      endDate, 
+      {}
+    );
+
+    res.json({
+      message: 'Yearly report generated successfully',
+      report: reportData
+    });
+
+  } catch (error) {
+    logger.error('Error generating quick yearly report:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/reports/summary - Get summary statistics (existing endpoint)
 router.get('/summary', requireManager, async (req, res) => {
   try {
     const { from_date, to_date } = req.query;

@@ -12,6 +12,8 @@ const importRoutes = require('./routes/import');
 const reportsRoutes = require('./routes/reports');
 const usersRoutes = require('./routes/users');
 const queueRoutes = require('./routes/queue');
+const contractorsRoutes = require('./routes/contractors');
+const suppliersRoutes = require('./routes/suppliers');
 
 // Import middleware
 const { authenticateToken } = require('./middleware/auth');
@@ -41,11 +43,13 @@ app.use('/public', express.static(path.join(__dirname, '../client/public')));
 
 // API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/deliveries', deliveriesRoutes);
-app.use('/api/import', importRoutes);
-app.use('/api/reports', reportsRoutes);
-app.use('/api/users', usersRoutes);
-app.use('/api/queue', queueRoutes);
+app.use('/api/deliveries', authenticateToken, deliveriesRoutes);
+app.use('/api/import', authenticateToken, importRoutes);
+app.use('/api/reports', authenticateToken, reportsRoutes);
+app.use('/api/users', authenticateToken, usersRoutes);
+app.use('/api/queue', authenticateToken, queueRoutes);
+app.use('/api/contractors', authenticateToken, contractorsRoutes);
+app.use('/api/suppliers', authenticateToken, suppliersRoutes);
 
 // Serve frontend
 app.get('/', (req, res) => {
