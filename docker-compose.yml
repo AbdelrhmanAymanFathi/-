@@ -1,0 +1,138 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: deliveries_postgres
+    environment:
+      POSTGRES_DB: deliveries_accounting
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - deliveries_network
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: deliveries_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - deliveries_network
+    restart: unless-stopped
+
+  # Application Server
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: deliveries_app
+    environment:
+      NODE_ENV: production
+      DB_CLIENT: postgresql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: deliveries_accounting
+      DB_USER: postgres
+      DB_PASSWORD: postgres_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_EXPIRES_IN: 24h
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - deliveries_network
+    restart: unless-stopped
+
+  # NGINX Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: deliveries_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./uploads:/var/www/uploads:ro
+    depends_on:
+      - app
+    networks:
+      - deliveries_network
+    restart: unless-stopped
+
+  # PM2 Process Manager
+  pm2:
+    image: node:18-alpine
+    container_name: deliveries_pm2
+    working_dir: /app
+    command: >
+      sh -c "npm install -g pm2 &&
+             pm2 start ecosystem.config.js &&
+             pm2-runtime start ecosystem.config.js"
+    environment:
+      NODE_ENV: production
+    volumes:
+      - .:/app
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      - app
+    networks:
+      - deliveries_network
+    restart: unless-stopped
+
+  # Background Job Queue (BullMQ)
+  queue:
+    image: node:18-alpine
+    container_name: deliveries_queue
+    working_dir: /app
+    command: >
+      sh -c "npm install &&
+             npm run queue:worker"
+    environment:
+      NODE_ENV: production
+      DB_CLIENT: postgresql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: deliveries_accounting
+      DB_USER: postgres
+      DB_PASSWORD: postgres_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - deliveries_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  deliveries_network:
+    driver: bridge
+
