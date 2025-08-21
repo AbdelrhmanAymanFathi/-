@@ -69,10 +69,33 @@ router.get('/activity', requireManager, async (req, res) => {
 router.get('/', requireManager, async (req, res) => {
   try {
     const users = await db('users')
-      .select('id', 'name', 'email', 'role', 'created_at')
+      .select(
+        'id', 
+        'name', 
+        'email', 
+        'role', 
+        'created_at',
+        'last_login',
+        'status'
+      )
       .orderBy('name');
 
-    res.json({ users });
+    // Get delivery count for each user
+    const usersWithDeliveries = await Promise.all(
+      users.map(async (user) => {
+        const deliveryCount = await db('deliveries')
+          .where('created_by', user.id)
+          .count('* as count')
+          .first();
+        
+        return {
+          ...user,
+          delivery_count: parseInt(deliveryCount.count) || 0
+        };
+      })
+    );
+
+    res.json(usersWithDeliveries);
 
   } catch (error) {
     logger.error('Error fetching users:', error);

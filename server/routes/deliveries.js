@@ -119,6 +119,94 @@ router.get('/', requireAccountant, async (req, res) => {
   }
 });
 
+// GET /api/deliveries/search - Search deliveries
+router.get('/search', requireAccountant, async (req, res) => {
+  try {
+    const {
+      search,
+      from_date,
+      to_date,
+      contractor_id,
+      supplier_id
+    } = req.query;
+
+    // Build query
+    let query = db('deliveries')
+      .select(
+        'deliveries.*',
+        'contractors.name as contractor_name',
+        'suppliers.name as supplier_name'
+      )
+      .leftJoin('contractors', 'deliveries.contractor_id', 'contractors.id')
+      .leftJoin('suppliers', 'deliveries.supplier_id', 'suppliers.id')
+      .orderBy('deliveries.date', 'desc');
+
+    // Apply filters
+    if (from_date && to_date) {
+      query = query.whereBetween('deliveries.date', [from_date, to_date]);
+    } else if (from_date) {
+      query = query.where('deliveries.date', '>=', from_date);
+    } else if (to_date) {
+      query = query.where('deliveries.date', '<=', to_date);
+    }
+
+    if (contractor_id) {
+      query = query.where('deliveries.contractor_id', contractor_id);
+    }
+
+    if (supplier_id) {
+      query = query.where('deliveries.supplier_id', supplier_id);
+    }
+
+    if (search) {
+      query = query.where(function() {
+        this.where('deliveries.company_voucher_no', 'like', `%${search}%`)
+          .orWhere('deliveries.item_description', 'like', `%${search}%`)
+          .orWhere('contractors.name', 'like', `%${search}%`)
+          .orWhere('suppliers.name', 'like', `%${search}%`);
+      });
+    }
+
+    const deliveries = await query;
+
+    res.json(deliveries);
+  } catch (error) {
+    logger.error('Error searching deliveries:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/deliveries/dashboard - Get dashboard statistics
+router.get('/dashboard', requireAccountant, async (req, res) => {
+  try {
+    // Get total deliveries
+    const totalDeliveries = await db('deliveries').count('* as count').first();
+    
+    // Get total volume
+    const totalVolume = await db('deliveries').sum('volume as total').first();
+    
+    // Get total value
+    const totalValue = await db('deliveries').sum('net_value as total').first();
+    
+    // Get today's deliveries
+    const today = new Date().toISOString().split('T')[0];
+    const todayDeliveries = await db('deliveries')
+      .where('date', today)
+      .count('* as count')
+      .first();
+
+    res.json({
+      totalDeliveries: parseInt(totalDeliveries.count) || 0,
+      totalVolume: parseFloat(totalVolume.total) || 0,
+      totalValue: parseFloat(totalValue.total) || 0,
+      todayDeliveries: parseInt(todayDeliveries.count) || 0
+    });
+  } catch (error) {
+    logger.error('Error fetching dashboard data:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // GET /api/deliveries/:id - Get delivery details
 router.get('/:id', requireAccountant, async (req, res) => {
   try {

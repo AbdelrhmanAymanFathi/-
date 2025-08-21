@@ -24,8 +24,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Security middleware
-app.use(helmet());
-app.use(cors());
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for development
+  crossOriginEmbedderPolicy: false,
+  hsts: false // Disable HSTS for development
+}));
+app.use(cors({
+  origin: true, // Allow all origins in development
+  credentials: true
+}));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -38,8 +45,20 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static files
-app.use('/public', express.static(path.join(__dirname, '../client/public')));
+// Serve static files with proper MIME types
+app.use(express.static(path.join(__dirname, '../client/public'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    } else if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    } else if (path.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    }
+  }
+}));
+
+
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -59,9 +78,14 @@ app.get('/', (req, res) => {
 // Error handling middleware
 app.use(errorHandler);
 
-// 404 handler
+// 404 handler - Serve index.html for frontend routes, JSON for API routes
 app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+  if (req.path.startsWith('/api/')) {
+    res.status(404).json({ error: 'API route not found' });
+  } else {
+    // Serve index.html for frontend routes (SPA)
+    res.sendFile(path.join(__dirname, '../client/public/index.html'));
+  }
 });
 
 // Start server
