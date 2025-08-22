@@ -6,7 +6,7 @@ const logger = require('../utils/logger');
 const router = express.Router();
 
 // GET /api/suppliers - List all suppliers
-router.get('/', requireAccountant, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const suppliers = await db('suppliers')
       .select('*')
@@ -21,7 +21,7 @@ router.get('/', requireAccountant, async (req, res) => {
 });
 
 // GET /api/suppliers/:id - Get supplier details
-router.get('/:id', requireAccountant, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -42,7 +42,7 @@ router.get('/:id', requireAccountant, async (req, res) => {
 });
 
 // POST /api/suppliers - Create new supplier
-router.post('/', requireAccountant, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { name, contact_info, address, material_type } = req.body;
 
@@ -72,7 +72,7 @@ router.post('/', requireAccountant, async (req, res) => {
 });
 
 // PUT /api/suppliers/:id - Update supplier
-router.put('/:id', requireAccountant, async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name, contact_info, address, material_type } = req.body;
@@ -110,7 +110,7 @@ router.put('/:id', requireAccountant, async (req, res) => {
 });
 
 // DELETE /api/suppliers/:id - Delete supplier
-router.delete('/:id', requireAccountant, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 

@@ -6,7 +6,7 @@ const logger = require('../utils/logger');
 const router = express.Router();
 
 // GET /api/contractors - List all contractors
-router.get('/', requireAccountant, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const contractors = await db('contractors')
       .select('*')
@@ -21,7 +21,7 @@ router.get('/', requireAccountant, async (req, res) => {
 });
 
 // GET /api/contractors/:id - Get contractor details
-router.get('/:id', requireAccountant, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -42,7 +42,7 @@ router.get('/:id', requireAccountant, async (req, res) => {
 });
 
 // POST /api/contractors - Create new contractor
-router.post('/', requireAccountant, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { name, contact_info, address } = req.body;
 
@@ -71,7 +71,7 @@ router.post('/', requireAccountant, async (req, res) => {
 });
 
 // PUT /api/contractors/:id - Update contractor
-router.put('/:id', requireAccountant, async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name, contact_info, address } = req.body;
@@ -108,7 +108,7 @@ router.put('/:id', requireAccountant, async (req, res) => {
 });
 
 // DELETE /api/contractors/:id - Delete contractor
-router.delete('/:id', requireAccountant, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 

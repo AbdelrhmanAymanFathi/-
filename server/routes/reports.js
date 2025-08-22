@@ -7,7 +7,7 @@ const advancedReportService = require('../services/advancedReportService');
 const router = express.Router();
 
 // GET /api/reports/periods - Get available report periods
-router.get('/periods', requireManager, async (req, res) => {
+router.get('/periods', async (req, res) => {
   try {
     const periods = await advancedReportService.getAvailablePeriods();
     res.json({ periods });
@@ -18,7 +18,7 @@ router.get('/periods', requireManager, async (req, res) => {
 });
 
 // POST /api/reports/generate - Generate period-based report
-router.post('/generate', requireManager, async (req, res) => {
+router.post('/generate', async (req, res) => {
   try {
     const { periodType, startDate, endDate, contractor_id, supplier_id } = req.body;
 
@@ -61,7 +61,7 @@ router.post('/generate', requireManager, async (req, res) => {
 });
 
 // POST /api/reports/export - Export report to Excel
-router.post('/export', requireManager, async (req, res) => {
+router.post('/export', async (req, res) => {
   try {
     const { periodType, startDate, endDate, contractor_id, supplier_id } = req.body;
 
@@ -103,7 +103,7 @@ router.post('/export', requireManager, async (req, res) => {
 });
 
 // GET /api/reports/quick-daily - Quick daily report (last 7 days)
-router.get('/quick-daily', requireManager, async (req, res) => {
+router.get('/quick-daily', async (req, res) => {
   try {
     const endDate = new Date().toISOString().split('T')[0];
     const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -121,7 +121,7 @@ router.get('/quick-daily', requireManager, async (req, res) => {
 });
 
 // GET /api/reports/quick-weekly - Quick weekly report (last 4 weeks)
-router.get('/quick-weekly', requireManager, async (req, res) => {
+router.get('/quick-weekly', async (req, res) => {
   try {
     const endDate = new Date().toISOString().split('T')[0];
     const startDate = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -139,7 +139,7 @@ router.get('/quick-weekly', requireManager, async (req, res) => {
 });
 
 // GET /api/reports/quick-monthly - Quick monthly report (last 6 months)
-router.get('/quick-monthly', requireManager, async (req, res) => {
+router.get('/quick-monthly', async (req, res) => {
   try {
     const endDate = new Date().toISOString().split('T')[0];
     const startDate = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -157,7 +157,7 @@ router.get('/quick-monthly', requireManager, async (req, res) => {
 });
 
 // GET /api/reports/quick-yearly - Quick yearly report (last 2 years)
-router.get('/quick-yearly', requireManager, async (req, res) => {
+router.get('/quick-yearly', async (req, res) => {
   try {
     const endDate = new Date().toISOString().split('T')[0];
     const startDate = new Date(Date.now() - 730 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -175,7 +175,7 @@ router.get('/quick-yearly', requireManager, async (req, res) => {
 });
 
 // GET /api/reports/summary - Get summary statistics
-router.get('/summary', requireManager, async (req, res) => {
+router.get('/summary', async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     
@@ -198,7 +198,7 @@ router.get('/summary', requireManager, async (req, res) => {
 });
 
 // GET /api/reports/period-breakdown - Get period breakdown
-router.get('/period-breakdown', requireManager, async (req, res) => {
+router.get('/period-breakdown', async (req, res) => {
   try {
     const { periodType, startDate, endDate } = req.query;
     
@@ -225,7 +225,7 @@ router.get('/period-breakdown', requireManager, async (req, res) => {
 });
 
 // GET /api/reports/top-performers - Get top performers
-router.get('/top-performers', requireManager, async (req, res) => {
+router.get('/top-performers', async (req, res) => {
   try {
     const { startDate, endDate, limit = 10 } = req.query;
     
@@ -252,7 +252,7 @@ router.get('/top-performers', requireManager, async (req, res) => {
 });
 
 // GET /api/reports/vehicle-performance - Get vehicle performance
-router.get('/vehicle-performance', requireManager, async (req, res) => {
+router.get('/vehicle-performance', async (req, res) => {
   try {
     const { startDate, endDate, limit = 10 } = req.query;
     

@@ -28,7 +28,7 @@ const updateDeliverySchema = deliverySchema.keys({
 });
 
 // GET /api/deliveries - List deliveries with filters
-router.get('/', requireAccountant, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const {
       page = 1,
@@ -120,7 +120,7 @@ router.get('/', requireAccountant, async (req, res) => {
 });
 
 // GET /api/deliveries/search - Search deliveries
-router.get('/search', requireAccountant, async (req, res) => {
+router.get('/search', async (req, res) => {
   try {
     const {
       search,
@@ -177,7 +177,7 @@ router.get('/search', requireAccountant, async (req, res) => {
 });
 
 // GET /api/deliveries/dashboard - Get dashboard statistics
-router.get('/dashboard', requireAccountant, async (req, res) => {
+router.get('/dashboard', async (req, res) => {
   try {
     // Get total deliveries
     const totalDeliveries = await db('deliveries').count('* as count').first();
@@ -208,7 +208,7 @@ router.get('/dashboard', requireAccountant, async (req, res) => {
 });
 
 // GET /api/deliveries/:id - Get delivery details
-router.get('/:id', requireAccountant, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -238,7 +238,7 @@ router.get('/:id', requireAccountant, async (req, res) => {
 });
 
 // POST /api/deliveries - Create new delivery
-router.post('/', requireAccountant, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     // Validate input
     const { error, value } = deliverySchema.validate(req.body);
@@ -279,7 +279,7 @@ router.post('/', requireAccountant, async (req, res) => {
 });
 
 // PUT /api/deliveries/:id - Update delivery
-router.put('/:id', requireAccountant, async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -332,7 +332,7 @@ router.put('/:id', requireAccountant, async (req, res) => {
 });
 
 // DELETE /api/deliveries/:id - Soft delete delivery
-router.delete('/:id', requireAccountant, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -370,7 +370,7 @@ router.delete('/:id', requireAccountant, async (req, res) => {
 });
 
 // POST /api/deliveries/:id/recompute - Manually recompute fields
-router.post('/:id/recompute', requireAccountant, async (req, res) => {
+router.post('/:id/recompute', async (req, res) => {
   try {
     const { id } = req.params;
 

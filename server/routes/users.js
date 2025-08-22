@@ -6,7 +6,7 @@ const logger = require('../utils/logger');
 const router = express.Router();
 
 // GET /api/users/activity - Get user activity summary
-router.get('/activity', requireManager, async (req, res) => {
+router.get('/activity', async (req, res) => {
   try {
     const { from_date, to_date, user_id } = req.query;
 
@@ -66,7 +66,7 @@ router.get('/activity', requireManager, async (req, res) => {
 });
 
 // GET /api/users - List all users
-router.get('/', requireManager, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const users = await db('users')
       .select(
@@ -104,7 +104,7 @@ router.get('/', requireManager, async (req, res) => {
 });
 
 // GET /api/users/:id - Get user details
-router.get('/:id', requireManager, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -145,7 +145,7 @@ router.get('/:id', requireManager, async (req, res) => {
 });
 
 // GET /api/users/:id/deliveries - Get user's deliveries
-router.get('/:id/deliveries', requireManager, async (req, res) => {
+router.get('/:id/deliveries', async (req, res) => {
   try {
     const { id } = req.params;
     const { page = 1, limit = 20, from_date, to_date } = req.query;
@@ -208,7 +208,7 @@ router.get('/:id/deliveries', requireManager, async (req, res) => {
 });
 
 // GET /api/users/:id/imports - Get user's import batches
-router.get('/:id/imports', requireManager, async (req, res) => {
+router.get('/:id/imports', async (req, res) => {
   try {
     const { id } = req.params;
     const { page = 1, limit = 20, status } = req.query;
@@ -259,7 +259,7 @@ router.get('/:id/imports', requireManager, async (req, res) => {
 });
 
 // GET /api/users/stats - Get overall user statistics
-router.get('/stats/overview', requireManager, async (req, res) => {
+router.get('/stats/overview', async (req, res) => {
   try {
     const { from_date, to_date } = req.query;
 

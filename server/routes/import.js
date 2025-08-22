@@ -21,7 +21,33 @@ const importSchema = Joi.object({
 });
 
 // POST /api/import/excel - Upload and analyze Excel file
-router.post('/excel', requireAccountant, excelImportService.getUploadMiddleware(), async (req, res) => {
+router.post('/excel', excelImportService.getUploadMiddleware(), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Analyze the uploaded file
+    const analysis = await excelImportService.analyzeFile(req.file.path);
+    
+    res.json({
+      message: 'File analyzed successfully',
+      file: {
+        originalname: req.file.originalname,
+        filename: req.file.filename,
+        path: req.file.path
+      },
+      analysis
+    });
+
+  } catch (error) {
+    logger.error('Excel analysis error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/import/analyze - Analyze Excel file (alias for excel endpoint)
+router.post('/analyze', excelImportService.getUploadMiddleware(), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -47,7 +73,7 @@ router.post('/excel', requireAccountant, excelImportService.getUploadMiddleware(
 });
 
 // POST /api/import/process - Process import with mapping
-router.post('/process', requireAccountant, async (req, res) => {
+router.post('/process', async (req, res) => {
   try {
     // Validate mapping configuration
     const { error, value } = importSchema.validate(req.body);
@@ -76,7 +102,7 @@ router.post('/process', requireAccountant, async (req, res) => {
 });
 
 // GET /api/import/batches - List import batches
-router.get('/batches', requireAccountant, async (req, res) => {
+router.get('/batches', async (req, res) => {
   try {
     const { page = 1, limit = 20, status } = req.query;
     const offset = (page - 1) * limit;
@@ -104,6 +130,21 @@ router.get('/batches', requireAccountant, async (req, res) => {
 
   } catch (error) {
     logger.error('Error fetching import batches:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/import/history - Get import history
+router.get('/history', async (req, res) => {
+  try {
+    const batches = await excelImportService.db('import_batches')
+      .select('*')
+      .orderBy('created_at', 'desc')
+      .limit(50);
+
+    res.json(batches);
+  } catch (error) {
+    logger.error('Error fetching import history:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
